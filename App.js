@@ -7,10 +7,13 @@ import * as Permissions from "expo-permissions";
 import React, { useState, useEffect, useRef } from "react";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import config from "./config/index.json";
+import MapViewDirections from "react-native-maps-directions";
 
 export default function App() {
+  const mapEl = useRef(null);
   const [origin, setOrigin] = useState(null);
   const [destination, setDestination] = useState(null);
+  const [distance, setDistance] = useState(null);
 
   useEffect(() => {
     (async function () {
@@ -41,7 +44,28 @@ export default function App() {
         initialRegion={origin}
         showsUserLocation={true}
         loadingEnabled={true}
-      />
+        ref={mapEl}
+      >
+        {destination && (
+          <MapViewDirections
+            origin={origin}
+            destination={destination}
+            apikey={config.googleAPI}
+            strokeWidth={3}
+            onReady={(result) => {
+              setDistance(result.distance);
+              mapEl.current.fitToCoordinates(result.coordinates, {
+                edgePadding: {
+                  top: 50,
+                  bottom: 50,
+                  left: 50,
+                  right: 50,
+                },
+              });
+            }}
+          />
+        )}
+      </MapView>
       <View style={css.search}>
         <GooglePlacesAutocomplete
           placeholder="Para onde vamos ?"
@@ -61,6 +85,7 @@ export default function App() {
           fetchDetails={true}
           styles={{ listView: { height: 100 } }}
         />
+        <View>{distance && <Text>Distância: {distance}M</Text>}</View>
       </View>
     </KeyboardAvoidingView>
   );
